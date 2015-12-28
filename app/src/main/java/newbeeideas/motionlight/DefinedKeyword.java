@@ -10,10 +10,10 @@ public class DefinedKeyword {
     public static String KEYWORD_BLUE="我很抑郁";
     public static String KEYWORD_GREEN="我很高兴";
     public static String KEYWORD_CLOSE="关闭";
-
+    public static String ERR_NOT_PRESET = "####";
     private static String BT_CMD_RED="1";
-    private static String BT_CMD_BLUE="2";
-    private static String BT_CMD_GREEN="3";
+    private static String BT_CMD_GREEN = "2";
+    private static String BT_CMD_BLUE = "3";
     private static String BT_CMD_CLOSE="4";
 
     public static String getBTCmd(String voice_input){
@@ -28,6 +28,7 @@ public class DefinedKeyword {
             cmd=BT_CMD_CLOSE;
         }else{
             Log.d("DefinedKeyword","voice_input doesnt match any of the preset");
+            cmd = ERR_NOT_PRESET;
         }
         return cmd;
     }

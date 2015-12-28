@@ -1,38 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="8dp"
+    android:orientation="vertical"
     android:paddingLeft="80dp"
-    android:paddingRight="80dp">
+    android:paddingRight="80dp"
+    android:paddingTop="8dp">
 
     <Button
+        android:id="@+id/redLightBtn"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New Button"
-        android:id="@+id/redLightBtn"
-        android:onClick="onSelectedRed" />
+        android:onClick="onSelectedRed"
+        android:text="@string/text_red" />
 
     <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="New Button"
         android:id="@+id/greenLightBtn"
-        android:onClick="onSelectedGreen" />
-
-    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New Button"
+        android:onClick="onSelectedGreen"
+        android:text="@string/text_green" />
+
+    <Button
         android:id="@+id/blueLightBtn"
-        android:onClick="onSelectedBlue" />
-
-    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New Button"
+        android:onClick="onSelectedBlue"
+        android:text="@string/text_blue" />
+
+    <Button
         android:id="@+id/closeLightBtn"
-        android:onClick="onSelectedClose" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="onSelectedClose"
+        android:text="@string/text_close" />
 
 </LinearLayout>
