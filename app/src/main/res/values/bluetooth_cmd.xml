@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bt_cmd_red">1</string>
+    <string name="bt_cmd_green">2</string>
+    <string name="bt_cmd_blue">3</string>
+    <string name="bt_cmd_close">4</string>
+</resources>
