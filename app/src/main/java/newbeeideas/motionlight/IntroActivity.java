@@ -30,6 +30,7 @@ public class IntroActivity extends Activity {
         if(!sharedPreferences.getString(Constants.USER_PHONE_NUMBER,"0").equals(tel)){
             SharedPreferences.Editor editor=sharedPreferences.edit();
             editor.putString(Constants.USER_PHONE_NUMBER,tel);
+            editor.commit();
         }
 
         Intent intent=new Intent(this,MainActivity.class);
