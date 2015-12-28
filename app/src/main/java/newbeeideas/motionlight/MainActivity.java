@@ -24,6 +24,8 @@ import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
 
+import java.net.Socket;
+
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 
@@ -36,8 +38,10 @@ public class MainActivity extends Activity {
     public void onStart(){
         super.onStart();
         if(mBluetoothHelper.isBluetoothEnabled()){
-            mBluetoothHelper.setupService();
-            mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+            if(!mBluetoothHelper.isServiceAvailable()) {
+                mBluetoothHelper.setupService();
+                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+            }
         }else{
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
@@ -62,10 +66,11 @@ public class MainActivity extends Activity {
 
     public void onRecognizeComplete(String result){
         Toast.makeText(this,"Voice result:"+JsonParser.parseIatResult(result),Toast.LENGTH_LONG).show();
-        mBluetoothHelper.send(DefinedKeyword.getBTCmd(result),true);
+        mBluetoothHelper.send(DefinedKeyword.getBTCmd(result), true);
+        Socket socket=new Socket();
     }
 
-    public void onVoiceCmd(){
+    public void onVoiceCmd(View v){
         RecognizerDialog iatDialog=new RecognizerDialog(MainActivity.this,mInitListener);
         iatDialog.setListener(new RecognizerDialogListener() {
             @Override
@@ -81,8 +86,10 @@ public class MainActivity extends Activity {
         iatDialog.show();
     }
 
-    public void onSwitchCmd(){
-
+    public void onSwitchCmd(View v){
+        Intent intent=new Intent(MainActivity.this,ManualSwitchActivity.class);
+        intent.putExtra(ManualSwitchActivity.DISPLAY_MODE,ManualSwitchActivity.DISPLAY_MODE_DIALOG);
+        startActivityForResult(intent,ManualSwitchActivity.REQUEST_CODE);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -98,6 +105,11 @@ public class MainActivity extends Activity {
                         , "Bluetooth was not enabled."
                         , Toast.LENGTH_SHORT).show();
                 finish();
+            }
+        }else if(requestCode==ManualSwitchActivity.REQUEST_CODE){
+            if(resultCode==ManualSwitchActivity.RESULT_OK){
+                Log.d("MainActivity", "ManualSwitchActivity result:" + data.getStringExtra(ManualSwitchActivity.SELECTED_MODE));
+                mBluetoothHelper.send(data.getStringExtra(ManualSwitchActivity.SELECTED_MODE), true);
             }
         }
     }
