@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_title_enable_bt">请打开蓝牙</string>
+    <string name="notification_content_enable_bt">需使用蓝牙控制情绪灯</string>
+    <string name="notification_title_bt_failed">蓝牙通信失败</string>
+    <string name="notification_content_bt_failed">点击重新设置</string>
+    <string name="notification_title_bt_disconnected">蓝牙设备断开连接</string>
+    <string name="notification_content_bt_disconnected">点击重新设置</string>
+    <string name="notification_title_no_network">无网络连接</string>
+    <string name="notification_content_no_network">请连接wifi或打开移动数据</string>
+    <string name="notification_title_new_user_msg">另一半有新动向</string>
+    <string name="notification_content_new_user_msg">快猜一猜她/他怎么样?</string>
+</resources>
