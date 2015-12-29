@@ -5,33 +5,42 @@
     android:layout_height="match_parent">
 
     <ImageView
+        android:id="@+id/mainBkGdImageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/imageView"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true" />
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true">
+        android:orientation="vertical">
 
         <Button
+            android:id="@+id/voiceCmdBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/voice_command_button_text"
-            android:id="@+id/voiceCmdBtn"
+            android:layout_marginBottom="60dp"
             android:onClick="onVoiceCmd"
-            android:layout_marginBottom="60dp" />
+            android:text="@string/voice_command_button_text" />
 
         <Button
+            android:id="@+id/switchCmdBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/switch_command_button_text"
-            android:id="@+id/switchCmdBtn"
-            android:onClick="onSwitchCmd" />
+            android:onClick="onSwitchCmd"
+            android:text="@string/switch_command_button_text" />
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/settingBtn"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="12dp" />
 
 </RelativeLayout>

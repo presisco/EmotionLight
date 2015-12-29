@@ -2,20 +2,15 @@ package newbeeideas.motionlight;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.iflytek.cloud.InitListener;
@@ -26,17 +21,33 @@ import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
 
-import java.net.Socket;
-
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 import app.akexorcist.bluetotohspp.library.DeviceList;
+
+import newbeeideas.motionlight.NotifyService.*;
 
 public class MainActivity extends Activity {
 
     private InitListener mInitListener;
     private BluetoothSPP mBluetoothHelper;
     private SharedPreferences sharedPreferences;
+
+    private String remoteCmd;
+
+    private ServiceConnection mNotifyServiceCon = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            NotifyServiceBinder binder = (NotifyServiceBinder) service;
+            NotifyService notifyService = binder.getNotifyService();
+            notifyService.signal(remoteCmd);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
     @Override
     public void onStart(){
@@ -56,6 +67,7 @@ public class MainActivity extends Activity {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
         }
+
     }
 
     @Override
@@ -74,15 +86,15 @@ public class MainActivity extends Activity {
 
         mBluetoothHelper.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
             public void onDeviceDisconnected() {
-                Toast.makeText(MainActivity.this,"Bluetooth device disconnected",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Bluetooth device disconnected", Toast.LENGTH_SHORT).show();
             }
 
             public void onDeviceConnectionFailed() {
-                Toast.makeText(MainActivity.this,"Bluetooth device failed",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Bluetooth device failed", Toast.LENGTH_SHORT).show();
             }
 
             public void onDeviceConnected(String name, String address) {
-                Toast.makeText(MainActivity.this,"Bluetooth device connected",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Bluetooth device connected", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -93,6 +105,9 @@ public class MainActivity extends Activity {
             }
         };
         SpeechUtility.createUtility(this, SpeechConstant.APPID + "=567e7f91," + SpeechConstant.FORCE_LOGIN + "=true");
+
+        Intent intent = new Intent(this, NotifyService.class);
+        startService(intent);
     }
 
     public void onRecognizeComplete(String result){
@@ -103,7 +118,9 @@ public class MainActivity extends Activity {
         String cmd=DefinedKeyword.getBTCmd(result);
         if(!cmd.equals(DefinedKeyword.ERR_NOT_PRESET)) {
             mBluetoothHelper.send(cmd, true);
-            Socket socket = new Socket();
+            remoteCmd = cmd;
+            Intent intent = new Intent(this, NotifyService.class);
+            bindService(intent, mNotifyServiceCon, Context.BIND_AUTO_CREATE);
         }
     }
 

@@ -5,6 +5,7 @@ import android.app.SharedElementCallback;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.telephony.TelephonyManager;
@@ -33,7 +34,25 @@ public class IntroActivity extends Activity {
             editor.commit();
         }
 
-        Intent intent=new Intent(this,MainActivity.class);
-        startActivity(intent);
+        new AsyncTask<Void, Void, Integer>() {
+            @Override
+            protected void onPostExecute(Integer integer) {
+                super.onPostExecute(integer);
+                Intent intent = new Intent(IntroActivity.this, MainActivity.class);
+                startActivity(intent);
+            }
+
+            @Override
+            protected Integer doInBackground(Void... params) {
+                try {
+                    Thread.sleep(2000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return 0;
+            }
+        }.execute();
+
+
     }
 }

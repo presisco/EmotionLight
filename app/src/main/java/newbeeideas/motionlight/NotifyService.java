@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
@@ -17,6 +18,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -41,6 +43,9 @@ public class NotifyService extends Service {
     private static final Integer VALID_MSG = 501;
     private static final Integer INVALID_MSG = 502;
 
+    private static final String HEAD_LIGHT_CHANGE = "light_change";
+    private static final String HEAD_PAIR_REQUEST = "pair_request";
+    private final IBinder mBinder = new NotifyServiceBinder();
     private BluetoothSPP mBluetoothHelper;
     private SharedPreferences sharedPreferences;
     private Socket socket;
@@ -78,16 +83,7 @@ public class NotifyService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        if (mBluetoothHelper.isBluetoothEnabled()) {
-            mBluetoothHelper.setupService();
-            mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
-            if (sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " ").equals(" ")) {
-            } else {
-                mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " "));
-            }
-        } else {
-            notifyUser(ERR_BT_DISABLED);
-        }
+        checkBluetoothStatus();
 
         waitForNext();
 
@@ -102,7 +98,7 @@ public class NotifyService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
     }
 
     @Override
@@ -167,6 +163,7 @@ public class NotifyService extends Service {
         int socket_host_port = Integer.parseInt(getResources().getString(R.string.socket_host_port));
         try {
             socket = new Socket(socket_host_addr, socket_host_port);
+            login();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -174,6 +171,68 @@ public class NotifyService extends Service {
 
     public void waitForNext() {
         new ServerListener().execute();
+    }
+
+    public Boolean checkBluetoothStatus() {
+        if (mBluetoothHelper.isBluetoothEnabled()) {
+            if (mBluetoothHelper.isServiceAvailable()) {
+                mBluetoothHelper.setupService();
+                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+                if (sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " ").equals(" ")) {
+                    return false;
+                } else {
+                    mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " "));
+                    return true;
+                }
+            }
+        } else {
+            notifyUser(ERR_BT_DISABLED);
+            return false;
+        }
+        return false;
+    }
+
+    public void login() {
+        try {
+            String cmd = sharedPreferences.getString(Constants.USER_PHONE_NUMBER, "000");
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            dos.writeUTF(cmd);
+            dos.flush();
+            dos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void pair(String pair_id) {
+        try {
+            String cmd = pair_id;
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            dos.writeUTF(cmd);
+            dos.flush();
+            dos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void signal(String cmd) {
+        try {
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            dos.writeUTF(cmd);
+            dos.flush();
+            dos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public class NotifyServiceBinder extends Binder {
+        public NotifyService getNotifyService() {
+            return NotifyService.this;
+        }
     }
 
     private class ServerListener extends AsyncTask<Void, Void, Integer> {
@@ -190,11 +249,18 @@ public class NotifyService extends Service {
             try {
                 DataInputStream dis = new DataInputStream(socket.getInputStream());
                 String msg = dis.readUTF();
-                if (DefinedKeyword.isValidBTCmd(msg)) {
-                    mBluetoothHelper.send(msg, true);
-                    return VALID_MSG;
-                } else {
-                    return INVALID_MSG;
+                switch (msg) {
+                    case HEAD_LIGHT_CHANGE:
+                        msg = dis.readUTF();
+                        if (DefinedKeyword.isValidBTCmd(msg) && checkBluetoothStatus()) {
+                            mBluetoothHelper.send(msg, true);
+                            return VALID_MSG;
+                        } else {
+                            return INVALID_MSG;
+                        }
+                    case HEAD_PAIR_REQUEST:
+                        msg = dis.readUTF();
+                        return VALID_MSG;
                 }
             } catch (IOException e) {
                 e.printStackTrace();

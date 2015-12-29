@@ -7,4 +7,8 @@
     <string name="text_green">绿</string>
     <string name="text_blue">蓝</string>
     <string name="text_close">关闭</string>
+    <string name="text_pair_device">配对账号</string>
+    <string name="text_pair_request">请求账号</string>
+    <string name="text_accept">同意</string>
+    <string name="text_refuse">拒绝</string>
 </resources>
