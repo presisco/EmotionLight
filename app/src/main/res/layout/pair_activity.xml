@@ -9,6 +9,7 @@
     android:paddingTop="4dp">
 
     <LinearLayout
+        android:id="@+id/inputRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -30,6 +31,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/displayRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -58,17 +60,19 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/pairPositiveBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="New Button" />
+            android:onClick="onPositive"
+            android:text="@string/text_accept" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/pairNegativeBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="New Button" />
+            android:onClick="onNegative"
+            android:text="@string/text_refuse" />
     </LinearLayout>
 </LinearLayout>

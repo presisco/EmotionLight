@@ -11,4 +11,7 @@
     <string name="text_pair_request">请求账号</string>
     <string name="text_accept">同意</string>
     <string name="text_refuse">拒绝</string>
+    <string name="text_apply">确定</string>
+    <string name="text_cancel">取消</string>
+    <string name="text_warning_no_pair">还未进行配对，是否开始配对?</string>
 </resources>

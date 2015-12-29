@@ -10,4 +10,8 @@
     <string name="notification_content_no_network">请连接wifi或打开移动数据</string>
     <string name="notification_title_new_user_msg">另一半有新动向</string>
     <string name="notification_content_new_user_msg">快猜一猜她/他怎么样?</string>
+    <string name="notification_title_new_pair_request">有新的配对请求</string>
+    <string name="notification_content_new_pair_request">点击进行处理</string>
+    <string name="notification_title_pair_request_accepted">配对请求已通过</string>
+    <string name="notification_content_pair_request_accepted">可以开始用灯光聊天了!</string>
 </resources>

@@ -15,7 +15,6 @@ import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -24,7 +23,6 @@ import java.net.Socket;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
-import app.akexorcist.bluetotohspp.library.DeviceList;
 
 /**
  * Created by presisco on 2015/12/28.
@@ -32,23 +30,26 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 public class NotifyService extends Service {
     public static final String TAG = NotifyService.class.getSimpleName();
 
-    private static final Integer ERR_BT_DISABLED = 777;
-    private static final Integer ERR_BT_DISCONNECTED = 778;
-    private static final Integer ERR_BT_FAILED = 779;
-    private static final Integer ERR_NO_NET = 801;
+    private static final String ERR_BT_DISABLED = "err_bt_disabled";
+    private static final String ERR_BT_DISCONNECTED = "err_bt_disconnected";
+    private static final String ERR_BT_FAILED = "err_bt_failed";
+    private static final String ERR_NO_NET = "err_no_net";
 
-    private static final Integer BT_CONNECTED = 666;
-
-    private static final Integer NEW_USER_MSG = 500;
-    private static final Integer VALID_MSG = 501;
-    private static final Integer INVALID_MSG = 502;
+    private static final String BT_CONNECTED = "bt_connected";
 
     private static final String HEAD_LIGHT_CHANGE = "light_change";
     private static final String HEAD_PAIR_REQUEST = "pair_request";
+    private static final String HEAD_PAIR_REQUEST_ACCEPTED = "pair_request_accepted";
+    private static final String HEAD_UNACCEPTABLE = "####";
+    private static final String HEAD_LOGIN = "head_login";
+    private static final String SIGNAL_REQUEST_ACCEPTED = "request_accepted";
+
     private final IBinder mBinder = new NotifyServiceBinder();
     private BluetoothSPP mBluetoothHelper;
     private SharedPreferences sharedPreferences;
     private Socket socket;
+
+    private String comming_pair_num;
 
     @Override
     public void onCreate() {
@@ -106,40 +107,59 @@ public class NotifyService extends Service {
         return super.onUnbind(intent);
     }
 
-    private void notifyUser(int msg_type) {
+    private void notifyUser(String msg_type) {
         Log.d(TAG, "notify()");
         NotificationManager notificationManager = (NotificationManager) getSystemService(this.NOTIFICATION_SERVICE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         Intent intent;
 
-        if (msg_type == ERR_BT_DISABLED) {
-            builder.setContentTitle(getResources().getString(R.string.notification_title_enable_bt))
-                    .setContentText(getResources().getString(R.string.notification_content_enable_bt));
+        switch (msg_type) {
+            case ERR_BT_DISABLED:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_enable_bt))
+                        .setContentText(getResources().getString(R.string.notification_content_enable_bt));
 
-            intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        } else if (msg_type == ERR_BT_FAILED) {
-            builder.setContentTitle(getResources().getString(R.string.notification_title_bt_failed))
-                    .setContentText(getResources().getString(R.string.notification_content_bt_failed));
+                intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                break;
+            case ERR_BT_DISCONNECTED:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_bt_failed))
+                        .setContentText(getResources().getString(R.string.notification_content_bt_failed));
 
-            intent = new Intent(this, MainActivity.class);
-        } else if (msg_type == ERR_BT_DISCONNECTED) {
-            builder.setContentTitle(getResources().getString(R.string.notification_title_bt_disconnected))
-                    .setContentText(getResources().getString(R.string.notification_content_bt_disconnected));
+                intent = new Intent(this, MainActivity.class);
+                break;
+            case ERR_BT_FAILED:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_bt_disconnected))
+                        .setContentText(getResources().getString(R.string.notification_content_bt_disconnected));
 
-            intent = new Intent(this, MainActivity.class);
-        } else if (msg_type == ERR_NO_NET) {
-            builder.setContentTitle(getResources().getString(R.string.notification_title_no_network))
-                    .setContentText(getResources().getString(R.string.notification_content_no_network));
+                intent = new Intent(this, MainActivity.class);
+                break;
+            case ERR_NO_NET:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_no_network))
+                        .setContentText(getResources().getString(R.string.notification_content_no_network));
 
-            intent = new Intent(this, MainActivity.class);
-        } else if (msg_type == NEW_USER_MSG) {
-            builder.setContentTitle(getResources().getString(R.string.notification_title_no_network))
-                    .setContentText(getResources().getString(R.string.notification_content_no_network));
+                intent = new Intent(this, MainActivity.class);
+                break;
+            case HEAD_LIGHT_CHANGE:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_no_network))
+                        .setContentText(getResources().getString(R.string.notification_content_no_network));
 
-            intent = new Intent(this, MainActivity.class);
-        } else {
-            Log.d(TAG, "notifyUser():unhandled msg_type:" + msg_type);
-            return;
+                intent = new Intent(this, MainActivity.class);
+                break;
+            case HEAD_PAIR_REQUEST:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_new_pair_request))
+                        .setContentText(getResources().getString(R.string.notification_content_new_pair_request));
+
+                intent = new Intent(this, PairActivity.class);
+                intent.putExtra(PairActivity.MODE, PairActivity.MODE_ACCEPT_REQUEST);
+                intent.putExtra(PairActivity.DISPLAY_ITEM, comming_pair_num);
+                break;
+            case HEAD_PAIR_REQUEST_ACCEPTED:
+                builder.setContentTitle(getResources().getString(R.string.notification_title_new_pair_request))
+                        .setContentText(getResources().getString(R.string.notification_content_new_pair_request));
+
+                intent = new Intent(this, MainActivity.class);
+            default:
+                Log.d(TAG, "notifyUser():unhandled msg_type:" + msg_type);
+                return;
         }
 
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
@@ -193,35 +213,21 @@ public class NotifyService extends Service {
     }
 
     public void login() {
-        try {
-            String cmd = sharedPreferences.getString(Constants.USER_PHONE_NUMBER, "000");
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF(cmd);
-            dos.flush();
-            dos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        new PostMsg().execute(HEAD_LOGIN);
     }
 
     public void pair(String pair_id) {
-        try {
-            String cmd = pair_id;
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF(cmd);
-            dos.flush();
-            dos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        new PostMsg().execute(HEAD_PAIR_REQUEST, pair_id);
     }
 
     public void signal(String cmd) {
+        new PostMsg().execute(HEAD_LIGHT_CHANGE, cmd);
+    }
+
+    public void acceptedRequest() {
         try {
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF(cmd);
+            dos.writeUTF(HEAD_PAIR_REQUEST);
             dos.flush();
             dos.close();
         } catch (IOException e) {
@@ -235,37 +241,77 @@ public class NotifyService extends Service {
         }
     }
 
-    private class ServerListener extends AsyncTask<Void, Void, Integer> {
+    private class ServerListener extends AsyncTask<Void, Void, String> {
         @Override
-        protected void onPostExecute(Integer integer) {
-            super.onPostExecute(integer);
-            if (integer == VALID_MSG)
-                notifyUser(NEW_USER_MSG);
+        protected void onPostExecute(String mode) {
+            super.onPostExecute(mode);
+            notifyUser(mode);
             waitForNext();
         }
 
         @Override
-        protected Integer doInBackground(Void... params) {
+        protected String doInBackground(Void... params) {
+            String mode = HEAD_UNACCEPTABLE;
             try {
                 DataInputStream dis = new DataInputStream(socket.getInputStream());
                 String msg = dis.readUTF();
+                mode = msg;
                 switch (msg) {
                     case HEAD_LIGHT_CHANGE:
                         msg = dis.readUTF();
                         if (DefinedKeyword.isValidBTCmd(msg) && checkBluetoothStatus()) {
                             mBluetoothHelper.send(msg, true);
-                            return VALID_MSG;
-                        } else {
-                            return INVALID_MSG;
                         }
+                        break;
                     case HEAD_PAIR_REQUEST:
-                        msg = dis.readUTF();
-                        return VALID_MSG;
+                        comming_pair_num = dis.readUTF();
+                        break;
+                    case HEAD_PAIR_REQUEST_ACCEPTED:
+                        break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return INVALID_MSG;
+            return mode;
         }
     }
+
+    private class PostMsg extends AsyncTask<String, Void, String> {
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            if (s == HEAD_UNACCEPTABLE)
+                notifyUser(s);
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String result = HEAD_UNACCEPTABLE;
+            try {
+                String mode = params[0];
+                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+                dos.writeUTF(mode);
+                switch (mode) {
+                    case HEAD_LOGIN:
+                        dos.writeUTF(sharedPreferences.getString(Constants.USER_PHONE_NUMBER, " "));
+                        break;
+                    case HEAD_PAIR_REQUEST:
+                        dos.writeUTF(params[1]);
+                        break;
+                    case HEAD_LIGHT_CHANGE:
+                        dos.writeUTF(params[1]);
+                        break;
+                    default:
+                        result = HEAD_UNACCEPTABLE;
+                        break;
+                }
+                dos.flush();
+                dos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return result;
+        }
+    }
+
 }

@@ -1,9 +1,12 @@
 package newbeeideas.motionlight;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -11,6 +14,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.iflytek.cloud.InitListener;
@@ -114,7 +119,7 @@ public class MainActivity extends Activity {
         result=JsonParser.parseIatResult(result);
         Log.d("Raw result",result);
         result=StringCooker.deleteChSymbols(result);
-        Log.d("Cooked result",result);
+        Log.d("Cooked result", result);
         String cmd=DefinedKeyword.getBTCmd(result);
         if(!cmd.equals(DefinedKeyword.ERR_NOT_PRESET)) {
             mBluetoothHelper.send(cmd, true);
@@ -125,6 +130,26 @@ public class MainActivity extends Activity {
     }
 
     public void onVoiceCmd(View v){
+        if (sharedPreferences.getString(Constants.PAIRED_PHONE_NUMBER, " ").equals(" ")) {
+            AlertDialog.Builder fetchDialogBuilder = new AlertDialog.Builder(this);
+
+            fetchDialogBuilder.setMessage(R.string.text_warning_no_pair)
+                    .setPositiveButton(R.string.text_apply, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent(MainActivity.this, PairActivity.class);
+                            intent.putExtra(PairActivity.MODE, PairActivity.MODE_SEND_REQUEST);
+                            dialog.dismiss();
+                        }
+                    }).setNegativeButton(R.string.text_cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            fetchDialogBuilder.show();
+        }
+
         RecognizerDialog iatDialog=new RecognizerDialog(MainActivity.this,mInitListener);
         iatDialog.setListener(new RecognizerDialogListener() {
             @Override
