@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="socket_host_addr"></string>
-    <string name="socket_host_port"></string>
+    <string name="socket_host_addr">local_host</string>
+    <string name="socket_host_port">22222</string>
     <string name="head_light_change">light_change</string>
     <string name="head_pair_request">pair_request</string>
 </resources>

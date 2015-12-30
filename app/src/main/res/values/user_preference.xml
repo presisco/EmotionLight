@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keyword_reset_title">关键字</string>
+    <string name="keyword_red_reset_title">灯为红</string>
+    <string name="keyword_green_reset_title">灯为绿</string>
+    <string name="keyword_blue_reset_title">灯为蓝</string>
+    <string name="keyword_close_reset_title">灯关闭</string>
+    <string name="user_account_title">账号</string>
+    <string name="pair_account_unpair">解除绑定</string>
+</resources>

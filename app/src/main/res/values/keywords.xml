@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keyword_red_default">我很烦</string>
+    <string name="keyword_green_default">我很高兴</string>
+    <string name="keyword_blue_default">我很抑郁</string>
+    <string name="keyword_close_default">关闭</string>
+    <string name="preference_keyword_red">user_defined_keyword_red</string>
+    <string name="preference_keyword_green">user_defined_keyword_blue</string>
+    <string name="preference_keyword_blue">user_defined_keyword_green</string>
+    <string name="preference_keyword_close">user_defined_keyword_close</string>
+</resources>

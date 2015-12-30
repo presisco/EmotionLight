@@ -29,6 +29,7 @@ import app.akexorcist.bluetotohspp.library.BluetoothState;
  */
 public class NotifyService extends Service {
     public static final String TAG = NotifyService.class.getSimpleName();
+    private static final Boolean ENABLE_NETWORK = false;
 
     private static final String ERR_BT_DISABLED = "err_bt_disabled";
     private static final String ERR_BT_DISCONNECTED = "err_bt_disconnected";
@@ -43,6 +44,8 @@ public class NotifyService extends Service {
     private static final String HEAD_UNACCEPTABLE = "####";
     private static final String HEAD_LOGIN = "head_login";
     private static final String SIGNAL_REQUEST_ACCEPTED = "request_accepted";
+
+    private static final String EMPTY_STATUS = "empty_status";
 
     private final IBinder mBinder = new NotifyServiceBinder();
     private BluetoothSPP mBluetoothHelper;
@@ -179,14 +182,7 @@ public class NotifyService extends Service {
     }
 
     public void initNetwork() {
-        String socket_host_addr = getResources().getString(R.string.socket_host_addr);
-        int socket_host_port = Integer.parseInt(getResources().getString(R.string.socket_host_port));
-        try {
-            socket = new Socket(socket_host_addr, socket_host_port);
-            login();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        new InitNetwork().execute();
     }
 
     public void waitForNext() {
@@ -225,14 +221,7 @@ public class NotifyService extends Service {
     }
 
     public void acceptedRequest() {
-        try {
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF(HEAD_PAIR_REQUEST);
-            dos.flush();
-            dos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        new PostMsg().execute(HEAD_PAIR_REQUEST_ACCEPTED);
     }
 
     public class NotifyServiceBinder extends Binder {
@@ -245,32 +234,36 @@ public class NotifyService extends Service {
         @Override
         protected void onPostExecute(String mode) {
             super.onPostExecute(mode);
-            notifyUser(mode);
-            waitForNext();
+            if (mode != EMPTY_STATUS) {
+                notifyUser(mode);
+                waitForNext();
+            }
         }
 
         @Override
         protected String doInBackground(Void... params) {
-            String mode = HEAD_UNACCEPTABLE;
-            try {
-                DataInputStream dis = new DataInputStream(socket.getInputStream());
-                String msg = dis.readUTF();
-                mode = msg;
-                switch (msg) {
-                    case HEAD_LIGHT_CHANGE:
-                        msg = dis.readUTF();
-                        if (DefinedKeyword.isValidBTCmd(msg) && checkBluetoothStatus()) {
-                            mBluetoothHelper.send(msg, true);
-                        }
-                        break;
-                    case HEAD_PAIR_REQUEST:
-                        comming_pair_num = dis.readUTF();
-                        break;
-                    case HEAD_PAIR_REQUEST_ACCEPTED:
-                        break;
+            String mode = EMPTY_STATUS;
+            if (ENABLE_NETWORK) {
+                try {
+                    DataInputStream dis = new DataInputStream(socket.getInputStream());
+                    String msg = dis.readUTF();
+                    mode = msg;
+                    switch (msg) {
+                        case HEAD_LIGHT_CHANGE:
+                            msg = dis.readUTF();
+                            if (DefinedKeyword.isValidBTCmd(msg) && checkBluetoothStatus()) {
+                                mBluetoothHelper.send(msg, true);
+                            }
+                            break;
+                        case HEAD_PAIR_REQUEST:
+                            comming_pair_num = dis.readUTF();
+                            break;
+                        case HEAD_PAIR_REQUEST_ACCEPTED:
+                            break;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
             return mode;
         }
@@ -280,37 +273,61 @@ public class NotifyService extends Service {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            if (s == HEAD_UNACCEPTABLE)
+            if (s == EMPTY_STATUS)
                 notifyUser(s);
         }
 
         @Override
         protected String doInBackground(String... params) {
-            String result = HEAD_UNACCEPTABLE;
-            try {
-                String mode = params[0];
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                dos.writeUTF(mode);
-                switch (mode) {
-                    case HEAD_LOGIN:
-                        dos.writeUTF(sharedPreferences.getString(Constants.USER_PHONE_NUMBER, " "));
-                        break;
-                    case HEAD_PAIR_REQUEST:
-                        dos.writeUTF(params[1]);
-                        break;
-                    case HEAD_LIGHT_CHANGE:
-                        dos.writeUTF(params[1]);
-                        break;
-                    default:
-                        result = HEAD_UNACCEPTABLE;
-                        break;
+            String result = EMPTY_STATUS;
+            if (ENABLE_NETWORK) {
+                try {
+                    String mode = params[0];
+                    DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+                    dos.writeUTF(mode);
+                    switch (mode) {
+                        case HEAD_LOGIN:
+                            dos.writeUTF(sharedPreferences.getString(Constants.USER_PHONE_NUMBER, " "));
+                            break;
+                        case HEAD_PAIR_REQUEST:
+                            dos.writeUTF(params[1]);
+                            break;
+                        case HEAD_LIGHT_CHANGE:
+                            dos.writeUTF(params[1]);
+                            break;
+                        case HEAD_PAIR_REQUEST_ACCEPTED:
+                            break;
+                        default:
+                            result = HEAD_UNACCEPTABLE;
+                            break;
+                    }
+                    dos.flush();
+                    dos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                dos.flush();
-                dos.close();
+            }
+            return result;
+        }
+    }
+
+    private class InitNetwork extends AsyncTask<Void, Void, Integer> {
+        @Override
+        protected Integer doInBackground(Void... params) {
+            String socket_host_addr = getResources().getString(R.string.socket_host_addr);
+            int socket_host_port = Integer.parseInt(getResources().getString(R.string.socket_host_port));
+            try {
+                socket = new Socket(socket_host_addr, socket_host_port);
+                login();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return result;
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
         }
     }
 

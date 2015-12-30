@@ -45,6 +45,10 @@
         <activity android:name=".ManualSwitchActivity"
                     android:theme="@android:style/Theme.Material.Dialog"/>
 
+        <activity
+            android:name=".UserPreferenceActivity"
+            android:theme="@android:style/Theme.Material" />
+
         <service android:name=".NotifyService" />
 
     </application>

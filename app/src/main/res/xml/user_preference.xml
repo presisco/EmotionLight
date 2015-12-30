@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <PreferenceCategory android:title="@string/keyword_reset_title">
+        <Preference
+            android:key="@string/preference_keyword_red"
+            android:title="@string/keyword_red_reset_title" />
+        <Preference
+            android:key="@string/preference_keyword_green"
+            android:title="@string/keyword_green_reset_title" />
+        <Preference
+            android:key="@string/preference_keyword_blue"
+            android:title="@string/keyword_blue_reset_title" />
+        <Preference
+            android:key="@string/preference_keyword_close"
+            android:title="@string/keyword_close_reset_title" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/user_account_title">
+        <Preference
+            android:key="@string/preference_keyword_red"
+            android:title="@string/pair_account_unpair" />
+    </PreferenceCategory>
+</PreferenceScreen>

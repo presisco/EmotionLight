@@ -117,7 +117,7 @@ public class MainActivity extends Activity {
 
     public void onRecognizeComplete(String result){
         result=JsonParser.parseIatResult(result);
-        Log.d("Raw result",result);
+        Log.d("Raw result", result);
         result=StringCooker.deleteChSymbols(result);
         Log.d("Cooked result", result);
         String cmd=DefinedKeyword.getBTCmd(result);
@@ -148,6 +148,7 @@ public class MainActivity extends Activity {
                 }
             });
             fetchDialogBuilder.show();
+            return;
         }
 
         RecognizerDialog iatDialog=new RecognizerDialog(MainActivity.this,mInitListener);
@@ -170,8 +171,13 @@ public class MainActivity extends Activity {
 
     public void onSwitchCmd(View v){
         Intent intent=new Intent(MainActivity.this,ManualSwitchActivity.class);
-        intent.putExtra(ManualSwitchActivity.DISPLAY_MODE,ManualSwitchActivity.DISPLAY_MODE_DIALOG);
-        startActivityForResult(intent,ManualSwitchActivity.REQUEST_CODE);
+        intent.putExtra(ManualSwitchActivity.DISPLAY_MODE, ManualSwitchActivity.DISPLAY_MODE_DIALOG);
+        startActivityForResult(intent, ManualSwitchActivity.REQUEST_CODE);
+    }
+
+    public void onPreferenceBtn(View v) {
+        Intent intent = new Intent(MainActivity.this, UserPreferenceActivity.class);
+        startActivity(intent);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
