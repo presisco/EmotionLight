@@ -43,12 +43,18 @@
         </activity>
 
         <activity android:name=".ManualSwitchActivity"
-                    android:theme="@android:style/Theme.Material.Dialog"/>
+            android:theme="@android:style/Theme.Material.Dialog.Alert" />
 
         <activity
             android:name=".UserPreferenceActivity"
             android:theme="@android:style/Theme.Material" />
 
+        <activity
+            android:name=".LoginActivity"
+            android:theme="@android:style/Theme.Material.Dialog.Alert" />
+        <activity
+            android:name=".PairActivity"
+            android:theme="@android:style/Theme.Material.Dialog.Alert" />
         <service android:name=".NotifyService" />
 
     </application>

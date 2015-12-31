@@ -6,5 +6,16 @@
     <string name="keyword_blue_reset_title">灯为蓝</string>
     <string name="keyword_close_reset_title">灯关闭</string>
     <string name="user_account_title">账号</string>
+    <string name="pair_account_pair">进行绑定</string>
     <string name="pair_account_unpair">解除绑定</string>
+    <string name="pair_account_accept">接受绑定请求</string>
+    <string name="user_account_login">登录</string>
+    <string name="user_account_logoff">退出</string>
+
+    <string name="preference_keyword_red">user_defined_keyword_red</string>
+    <string name="preference_keyword_green">user_defined_keyword_blue</string>
+    <string name="preference_keyword_blue">user_defined_keyword_green</string>
+    <string name="preference_keyword_close">user_defined_keyword_close</string>
+    <string name="preference_login_key">login_key</string>
+    <string name="preference_pair_key">pair_key</string>
 </resources>

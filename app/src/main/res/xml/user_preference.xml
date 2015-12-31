@@ -18,7 +18,10 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/user_account_title">
         <Preference
-            android:key="@string/preference_keyword_red"
+            android:key="@string/preference_pair_key"
             android:title="@string/pair_account_unpair" />
+        <Preference
+            android:key="@string/preference_login_key"
+            android:title="@string/user_account_logoff" />
     </PreferenceCategory>
 </PreferenceScreen>

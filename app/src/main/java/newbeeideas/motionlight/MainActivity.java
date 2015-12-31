@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,8 +13,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.iflytek.cloud.InitListener;
@@ -39,6 +37,8 @@ public class MainActivity extends Activity {
     private SharedPreferences sharedPreferences;
 
     private String remoteCmd;
+
+    private ImageView mBackground;
 
     private ServiceConnection mNotifyServiceCon = new ServiceConnection() {
         @Override
@@ -79,8 +79,10 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mBackground = (ImageView) findViewById(R.id.mainBkGdImageView);
 
         sharedPreferences=getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+        updateBackground(sharedPreferences.getString(Constants.CURRENT_LIGHT_COLOR, DefinedKeyword.LIGHT_CLOSE));
 
         mBluetoothHelper=new BluetoothSPP(this);
         mBluetoothHelper.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
@@ -120,8 +122,9 @@ public class MainActivity extends Activity {
         Log.d("Raw result", result);
         result=StringCooker.deleteChSymbols(result);
         Log.d("Cooked result", result);
-        String cmd=DefinedKeyword.getBTCmd(result);
+        String cmd = DefinedKeyword.getBTCmdFromVoice(result);
         if(!cmd.equals(DefinedKeyword.ERR_NOT_PRESET)) {
+            updateLightStatusAndBackground(DefinedKeyword.getStatusFromVoice(result));
             mBluetoothHelper.send(cmd, true);
             remoteCmd = cmd;
             Intent intent = new Intent(this, NotifyService.class);
@@ -130,7 +133,7 @@ public class MainActivity extends Activity {
     }
 
     public void onVoiceCmd(View v){
-        if (sharedPreferences.getString(Constants.PAIRED_PHONE_NUMBER, " ").equals(" ")) {
+        if (sharedPreferences.getString(Constants.PAIRED_PHONE_NUMBER, Constants.DEFAULT_PAIRED_PHONE_NUMBER).equals(Constants.DEFAULT_PAIRED_PHONE_NUMBER)) {
             AlertDialog.Builder fetchDialogBuilder = new AlertDialog.Builder(this);
 
             fetchDialogBuilder.setMessage(R.string.text_warning_no_pair)
@@ -139,6 +142,7 @@ public class MainActivity extends Activity {
                         public void onClick(DialogInterface dialog, int which) {
                             Intent intent = new Intent(MainActivity.this, PairActivity.class);
                             intent.putExtra(PairActivity.MODE, PairActivity.MODE_SEND_REQUEST);
+                            startActivityForResult(intent, PairActivity.SEND_REQUEST_CODE);
                             dialog.dismiss();
                         }
                     }).setNegativeButton(R.string.text_cancel, new DialogInterface.OnClickListener() {
@@ -180,6 +184,30 @@ public class MainActivity extends Activity {
         startActivity(intent);
     }
 
+    public void updateBackground(String light_status) {
+        switch (light_status) {
+            case DefinedKeyword.LIGHT_CLOSE:
+                mBackground.setImageResource(R.mipmap.main_background_default);
+                break;
+            case DefinedKeyword.LIGHT_RED:
+                mBackground.setImageResource(R.mipmap.main_background_red);
+                break;
+            case DefinedKeyword.LIGHT_GREEN:
+                mBackground.setImageResource(R.mipmap.main_background_green);
+                break;
+            case DefinedKeyword.LIGHT_BLUE:
+                mBackground.setImageResource(R.mipmap.main_background_blue);
+                break;
+        }
+    }
+
+    public void updateLightStatusAndBackground(String light_status) {
+        updateBackground(light_status);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(Constants.CURRENT_LIGHT_COLOR, light_status);
+        editor.commit();
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
             if(resultCode == Activity.RESULT_OK) {
@@ -200,10 +228,15 @@ public class MainActivity extends Activity {
             }
         }else if(requestCode==ManualSwitchActivity.REQUEST_CODE){
             if(resultCode==ManualSwitchActivity.RESULT_OK){
-                String cmd=data.getStringExtra(ManualSwitchActivity.SELECTED_MODE);
-                if(!cmd.equals(DefinedKeyword.ERR_NOT_PRESET)) {
-                    mBluetoothHelper.send(cmd, true);
+                String light_status = data.getStringExtra(ManualSwitchActivity.SELECTED_MODE);
+                if (!light_status.equals(DefinedKeyword.ERR_NOT_PRESET)) {
+                    updateLightStatusAndBackground(light_status);
+                    mBluetoothHelper.send(DefinedKeyword.getBTCmdFromStatus(light_status), true);
                 }
+            }
+        } else if (requestCode == PairActivity.SEND_REQUEST_CODE) {
+            if (resultCode == PairActivity.RESULT_OK) {
+
             }
         }
     }

@@ -154,6 +154,9 @@ public class NotifyService extends Service {
                 intent = new Intent(this, PairActivity.class);
                 intent.putExtra(PairActivity.MODE, PairActivity.MODE_ACCEPT_REQUEST);
                 intent.putExtra(PairActivity.DISPLAY_ITEM, comming_pair_num);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(Constants.PAIR_REQUEST_PHONE_NUM, comming_pair_num);
+                editor.commit();
                 break;
             case HEAD_PAIR_REQUEST_ACCEPTED:
                 builder.setContentTitle(getResources().getString(R.string.notification_title_new_pair_request))

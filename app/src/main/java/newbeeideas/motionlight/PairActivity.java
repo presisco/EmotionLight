@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,6 +24,8 @@ public class PairActivity extends Activity {
     public static final String MODE = "mode";
     public static final String MODE_SEND_REQUEST = "mode_send_request";
     public static final String MODE_ACCEPT_REQUEST = "mode_accept_request";
+    public static final Integer SEND_REQUEST_CODE = 10;
+    public static final Integer ACCEPT_REQUEST_CODE = 11;
     public static final String DISPLAY_ITEM = "display_item";
     public static final Integer RESULT_OK = 100;
     public static final Integer RESULT_CANCELED = 101;
@@ -46,8 +49,10 @@ public class PairActivity extends Activity {
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(Constants.PAIRED_PHONE_NUMBER, displayContent);
                     editor.commit();
+                    PairActivity.this.finish();
                     break;
             }
+            PairActivity.this.unbindService(mNotifyServiceCon);
         }
 
         @Override
@@ -65,14 +70,14 @@ public class PairActivity extends Activity {
         mode = intent.getStringExtra(MODE);
         switch (mode) {
             case MODE_SEND_REQUEST:
-                findViewById(R.id.displayRow).setEnabled(false);
+                findViewById(R.id.displayRow).setVisibility(View.INVISIBLE);
                 mInputText = (EditText) findViewById(R.id.pairDeviceEditText);
                 ((Button) findViewById(R.id.pairPositiveBtn)).setText(getResources().getString(R.string.text_apply));
-                ((Button) findViewById(R.id.pairPositiveBtn)).setText(getResources().getString(R.string.text_cancel));
+                ((Button) findViewById(R.id.pairNegativeBtn)).setText(getResources().getString(R.string.text_cancel));
                 break;
             case MODE_ACCEPT_REQUEST:
                 displayContent = intent.getStringExtra(DISPLAY_ITEM);
-                findViewById(R.id.inputRow).setEnabled(false);
+                findViewById(R.id.inputRow).setVisibility(View.INVISIBLE);
                 ((TextView) findViewById(R.id.pairDeviceTextView)).setText(displayContent);
                 break;
             default:
@@ -83,9 +88,16 @@ public class PairActivity extends Activity {
     public void onPositive(View v) {
         Intent intent = new Intent(PairActivity.this, NotifyService.class);
         bindService(intent, mNotifyServiceCon, Context.BIND_AUTO_CREATE);
+        SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE).edit();
+        editor.putString(Constants.PAIR_REQUEST_PHONE_NUM, Constants.DEFAULT_PAIR_REQUEST_PHONE_NUM);
+        editor.commit();
+        setResult(RESULT_OK);
     }
 
     public void onNegative(View v) {
+        SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE).edit();
+        editor.putString(Constants.PAIR_REQUEST_PHONE_NUM, Constants.DEFAULT_PAIR_REQUEST_PHONE_NUM);
+        editor.commit();
         setResult(RESULT_CANCELED);
         finish();
     }

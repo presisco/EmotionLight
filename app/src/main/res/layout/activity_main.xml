@@ -9,7 +9,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:alpha="0.5"
+        android:scaleType="fitXY"
+        android:src="@mipmap/main_background_default" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -34,7 +37,7 @@
             android:text="@string/switch_command_button_text" />
     </LinearLayout>
 
-    <ImageButton
+    <ImageView
         android:id="@+id/settingBtn"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -42,6 +45,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginRight="12dp"
         android:layout_marginTop="12dp"
-        android:onClick="onPreferenceBtn" />
+        android:onClick="onPreferenceBtn"
+        android:src="@android:drawable/ic_menu_preferences" />
 
 </RelativeLayout>

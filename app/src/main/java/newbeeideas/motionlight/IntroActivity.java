@@ -21,15 +21,16 @@ import java.util.Set;
  * Created by presisco on 2015/12/27.
  */
 public class IntroActivity extends Activity {
+    private Boolean isFirstLaunch = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setContentView(R.layout.intro_activity);
         SharedPreferences sharedPreferences= getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-        if (!sharedPreferences.getString(Constants.USER_PHONE_NUMBER, "0").equals("0")) {
-            SharedPreferences.Editor editor=sharedPreferences.edit();
-            editor.putString(Constants.USER_PHONE_NUMBER, "12345678901");
-            editor.commit();
+
+        if (sharedPreferences.getString(Constants.USER_PHONE_NUMBER, Constants.DEFAULT_USER_PHONE_NUMBER).equals(Constants.DEFAULT_USER_PHONE_NUMBER)) {
+            isFirstLaunch = true;
         }
 
         DefinedKeyword.initFromPreference(this);
@@ -37,9 +38,14 @@ public class IntroActivity extends Activity {
             @Override
             protected void onPostExecute(Integer integer) {
                 super.onPostExecute(integer);
-                Intent intent = new Intent(IntroActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
+                if (!isFirstLaunch) {
+                    Intent intent = new Intent(IntroActivity.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Intent intent = new Intent(IntroActivity.this, LoginActivity.class);
+                    startActivityForResult(intent, LoginActivity.LOGIN_REQUEST);
+                }
             }
 
             @Override
@@ -53,7 +59,16 @@ public class IntroActivity extends Activity {
                 return 0;
             }
         }.execute();
+    }
 
-
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == LoginActivity.LOGIN_REQUEST) {
+            if (resultCode == LoginActivity.LOGIN_RESULT_FINISHED) {
+                Intent intent = new Intent(IntroActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        }
     }
 }

@@ -31,22 +31,22 @@ public class ManualSwitchActivity extends Activity {
     }
 
     public void onSelectedRed(View v){
-        selected_mode =DefinedKeyword.getBTCmd(DefinedKeyword.KEYWORD_RED);
+        selected_mode = DefinedKeyword.LIGHT_RED;
         returnResult();
     }
 
     public void onSelectedGreen(View v){
-        selected_mode =DefinedKeyword.getBTCmd(DefinedKeyword.KEYWORD_GREEN);
+        selected_mode = DefinedKeyword.LIGHT_GREEN;
         returnResult();
     }
 
     public void onSelectedBlue(View v){
-        selected_mode =DefinedKeyword.getBTCmd(DefinedKeyword.KEYWORD_BLUE);
+        selected_mode = DefinedKeyword.LIGHT_BLUE;
         returnResult();
     }
 
     public void onSelectedClose(View v){
-        selected_mode =DefinedKeyword.getBTCmd(DefinedKeyword.KEYWORD_CLOSE);
+        selected_mode = DefinedKeyword.LIGHT_CLOSE;
         returnResult();
     }
 
