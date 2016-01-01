@@ -24,4 +24,9 @@
             android:key="@string/preference_login_key"
             android:title="@string/user_account_logoff" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/bt_title">
+        <Preference
+            android:key="@string/preference_select_bt_device_key"
+            android:title="@string/bt_select_device" />
+    </PreferenceCategory>
 </PreferenceScreen>

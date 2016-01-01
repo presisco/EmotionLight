@@ -24,7 +24,6 @@ import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
 
-import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 import app.akexorcist.bluetotohspp.library.DeviceList;
 
@@ -34,7 +33,6 @@ public class MainActivity extends Activity {
 
     NotifyService notify_service;
     private InitListener mInitListener;
-    //    private BluetoothSPP mBluetoothHelper;
     private SharedPreferences sharedPreferences;
     private String remoteCmd;
     private ImageView mBackground;
@@ -54,23 +52,17 @@ public class MainActivity extends Activity {
     @Override
     public void onStart(){
         super.onStart();
-//        super.onStart();
-//        if(mBluetoothHelper.isBluetoothEnabled()){
-//            if(!mBluetoothHelper.isServiceAvailable()) {
-//                mBluetoothHelper.setupService();
-//                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
-//            }
-//            if(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS," ").equals(" ")){
-//                Intent intent = new Intent(getApplicationContext(), DeviceList.class);
-//                startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
-//            }else{
-//                mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS," "));
-//            }
-//        }else{
-//            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-//            startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
-//        }
-        BluetoothHelper.initService(this, sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " "));
+        BluetoothHelper.initService(getApplicationContext());
+        Integer bt_status = BluetoothHelper.checkAvailability();
+        if (bt_status == BluetoothHelper.ERR_BT_DISABLED) {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
+        } else if (bt_status == BluetoothHelper.ERR_NO_DEV_ADDR) {
+            Intent intent = new Intent(this, DeviceList.class);
+            startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
+        } else {
+            BluetoothHelper.startService();
+        }
     }
 
     @Override
@@ -81,27 +73,6 @@ public class MainActivity extends Activity {
 
         sharedPreferences=getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
         updateBackground(sharedPreferences.getString(Constants.CURRENT_LIGHT_COLOR, DefinedKeyword.LIGHT_CLOSE));
-
-//        mBluetoothHelper=new BluetoothSPP(this);
-//        mBluetoothHelper.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
-//            public void onDataReceived(byte[] data, String message) {
-//                Toast.makeText(MainActivity.this,"bluetooth data received",Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//
-//        mBluetoothHelper.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
-//            public void onDeviceDisconnected() {
-//                Toast.makeText(MainActivity.this, "Bluetooth device disconnected", Toast.LENGTH_SHORT).show();
-//            }
-//
-//            public void onDeviceConnectionFailed() {
-//                Toast.makeText(MainActivity.this, "Bluetooth device failed", Toast.LENGTH_SHORT).show();
-//            }
-//
-//            public void onDeviceConnected(String name, String address) {
-//                Toast.makeText(MainActivity.this, "Bluetooth device connected", Toast.LENGTH_SHORT).show();
-//            }
-//        });
 
         mInitListener=new InitListener() {
             @Override
@@ -216,12 +187,16 @@ public class MainActivity extends Activity {
                 SharedPreferences.Editor editor=sharedPreferences.edit();
                 editor.putString(BluetoothState.EXTRA_DEVICE_ADDRESS,data.getStringExtra(BluetoothState.EXTRA_DEVICE_ADDRESS));
                 editor.commit();
-                //mBluetoothHelper.connect(data);
+                BluetoothHelper.startService(data.getStringExtra(BluetoothState.EXTRA_DEVICE_ADDRESS));
             }
         } else if(requestCode == BluetoothState.REQUEST_ENABLE_BT) {
             if(resultCode == Activity.RESULT_OK) {
-                //mBluetoothHelper.setupService();
-                //mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+                if (BluetoothHelper.checkAvailability() == BluetoothHelper.ERR_NO_DEV_ADDR) {
+                    Intent intent = new Intent(getApplicationContext(), DeviceList.class);
+                    startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
+                } else {
+                    BluetoothHelper.startService();
+                }
             } else {
                 Toast.makeText(getApplicationContext()
                         , "Bluetooth was not enabled."
@@ -233,8 +208,6 @@ public class MainActivity extends Activity {
                 String light_status = data.getStringExtra(ManualSwitchActivity.SELECTED_MODE);
                 if (!light_status.equals(DefinedKeyword.ERR_NOT_PRESET)) {
                     updateLightStatusAndBackground(light_status);
-                    //mBluetoothHelper.send(DefinedKeyword.getBTCmdFromStatus(light_status), true);
-                    //notify_service.sendBTCmd(DefinedKeyword.getBTCmdFromStatus(light_status));
                     BluetoothHelper.sendBTCmd(DefinedKeyword.getBTCmdFromStatus(light_status));
                 }
             }

@@ -68,6 +68,21 @@ public class NotifyService extends Service {
     public void onCreate() {
         super.onCreate();
         sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+        BluetoothHelper.getBluetoothSPP().setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
+            @Override
+            public void onDeviceConnected(String name, String address) {
+            }
+
+            @Override
+            public void onDeviceDisconnected() {
+                notifyUser(ERR_BT_DISCONNECTED);
+            }
+
+            @Override
+            public void onDeviceConnectionFailed() {
+                notifyUser(ERR_BT_FAILED);
+            }
+        });
         initNetwork();
     }
 

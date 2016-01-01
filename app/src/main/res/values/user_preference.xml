@@ -11,6 +11,8 @@
     <string name="pair_account_accept">接受绑定请求</string>
     <string name="user_account_login">登录</string>
     <string name="user_account_logoff">退出</string>
+    <string name="bt_title">蓝牙</string>
+    <string name="bt_select_device">选择设备</string>
 
     <string name="preference_keyword_red">user_defined_keyword_red</string>
     <string name="preference_keyword_green">user_defined_keyword_blue</string>
@@ -18,4 +20,5 @@
     <string name="preference_keyword_close">user_defined_keyword_close</string>
     <string name="preference_login_key">login_key</string>
     <string name="preference_pair_key">pair_key</string>
+    <string name="preference_select_bt_device_key">pair_key</string>
 </resources>

@@ -1,5 +1,6 @@
 package newbeeideas.motionlight;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +13,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import app.akexorcist.bluetotohspp.library.BluetoothState;
+import app.akexorcist.bluetotohspp.library.DeviceList;
 
 /**
  * Created by presisco on 2015/12/29.
@@ -49,6 +53,13 @@ public class UserPreferenceFragment extends PreferenceFragment {
 
         } else if (requestCode == PairActivity.SEND_REQUEST_CODE) {
 
+        } else if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
+            if (resultCode == Activity.RESULT_OK) {
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(BluetoothState.EXTRA_DEVICE_ADDRESS, data.getStringExtra(BluetoothState.EXTRA_DEVICE_ADDRESS));
+                editor.commit();
+                BluetoothHelper.reconnectDevice(data.getStringExtra(BluetoothState.EXTRA_DEVICE_ADDRESS));
+            }
         }
     }
 
@@ -80,6 +91,9 @@ public class UserPreferenceFragment extends PreferenceFragment {
                 Intent intent = new Intent(getActivity(), LoginActivity.class);
                 startActivityForResult(intent, LoginActivity.LOGIN_REQUEST);
             }
+        } else if (key == getString(R.string.preference_select_bt_device_key)) {
+            Intent intent = new Intent(getActivity(), DeviceList.class);
+            startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
         } else {
             Log.d("onPreferenceTreeClick()", "unhandled click source:" + key);
         }
