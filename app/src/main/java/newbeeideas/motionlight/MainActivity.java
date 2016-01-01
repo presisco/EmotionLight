@@ -32,20 +32,17 @@ import newbeeideas.motionlight.NotifyService.*;
 
 public class MainActivity extends Activity {
 
+    NotifyService notify_service;
     private InitListener mInitListener;
-    private BluetoothSPP mBluetoothHelper;
+    //    private BluetoothSPP mBluetoothHelper;
     private SharedPreferences sharedPreferences;
-
     private String remoteCmd;
-
     private ImageView mBackground;
-
     private ServiceConnection mNotifyServiceCon = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             NotifyServiceBinder binder = (NotifyServiceBinder) service;
-            NotifyService notifyService = binder.getNotifyService();
-            notifyService.signal(remoteCmd);
+            notify_service = binder.getNotifyService();
         }
 
         @Override
@@ -57,22 +54,23 @@ public class MainActivity extends Activity {
     @Override
     public void onStart(){
         super.onStart();
-        if(mBluetoothHelper.isBluetoothEnabled()){
-            if(!mBluetoothHelper.isServiceAvailable()) {
-                mBluetoothHelper.setupService();
-                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
-            }
-            if(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS," ").equals(" ")){
-                Intent intent = new Intent(getApplicationContext(), DeviceList.class);
-                startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
-            }else{
-                mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS," "));
-            }
-        }else{
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
-        }
-
+//        super.onStart();
+//        if(mBluetoothHelper.isBluetoothEnabled()){
+//            if(!mBluetoothHelper.isServiceAvailable()) {
+//                mBluetoothHelper.setupService();
+//                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+//            }
+//            if(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS," ").equals(" ")){
+//                Intent intent = new Intent(getApplicationContext(), DeviceList.class);
+//                startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
+//            }else{
+//                mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS," "));
+//            }
+//        }else{
+//            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//            startActivityForResult(intent, BluetoothState.REQUEST_ENABLE_BT);
+//        }
+        BluetoothHelper.initService(this, sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " "));
     }
 
     @Override
@@ -84,26 +82,26 @@ public class MainActivity extends Activity {
         sharedPreferences=getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
         updateBackground(sharedPreferences.getString(Constants.CURRENT_LIGHT_COLOR, DefinedKeyword.LIGHT_CLOSE));
 
-        mBluetoothHelper=new BluetoothSPP(this);
-        mBluetoothHelper.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
-            public void onDataReceived(byte[] data, String message) {
-                Toast.makeText(MainActivity.this,"bluetooth data received",Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        mBluetoothHelper.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
-            public void onDeviceDisconnected() {
-                Toast.makeText(MainActivity.this, "Bluetooth device disconnected", Toast.LENGTH_SHORT).show();
-            }
-
-            public void onDeviceConnectionFailed() {
-                Toast.makeText(MainActivity.this, "Bluetooth device failed", Toast.LENGTH_SHORT).show();
-            }
-
-            public void onDeviceConnected(String name, String address) {
-                Toast.makeText(MainActivity.this, "Bluetooth device connected", Toast.LENGTH_SHORT).show();
-            }
-        });
+//        mBluetoothHelper=new BluetoothSPP(this);
+//        mBluetoothHelper.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
+//            public void onDataReceived(byte[] data, String message) {
+//                Toast.makeText(MainActivity.this,"bluetooth data received",Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//
+//        mBluetoothHelper.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
+//            public void onDeviceDisconnected() {
+//                Toast.makeText(MainActivity.this, "Bluetooth device disconnected", Toast.LENGTH_SHORT).show();
+//            }
+//
+//            public void onDeviceConnectionFailed() {
+//                Toast.makeText(MainActivity.this, "Bluetooth device failed", Toast.LENGTH_SHORT).show();
+//            }
+//
+//            public void onDeviceConnected(String name, String address) {
+//                Toast.makeText(MainActivity.this, "Bluetooth device connected", Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
         mInitListener=new InitListener() {
             @Override
@@ -115,6 +113,8 @@ public class MainActivity extends Activity {
 
         Intent intent = new Intent(this, NotifyService.class);
         startService(intent);
+        if (notify_service == null)
+            bindService(intent, mNotifyServiceCon, Context.BIND_AUTO_CREATE);
     }
 
     public void onRecognizeComplete(String result){
@@ -122,13 +122,15 @@ public class MainActivity extends Activity {
         Log.d("Raw result", result);
         result=StringCooker.deleteChSymbols(result);
         Log.d("Cooked result", result);
+        if (result.length() == 1)
+            return;
         String cmd = DefinedKeyword.getBTCmdFromVoice(result);
         if(!cmd.equals(DefinedKeyword.ERR_NOT_PRESET)) {
             updateLightStatusAndBackground(DefinedKeyword.getStatusFromVoice(result));
-            mBluetoothHelper.send(cmd, true);
             remoteCmd = cmd;
-            Intent intent = new Intent(this, NotifyService.class);
-            bindService(intent, mNotifyServiceCon, Context.BIND_AUTO_CREATE);
+            notify_service.signal(cmd);
+        } else {
+            Toast.makeText(this, "不是可识别的关键词", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -214,12 +216,12 @@ public class MainActivity extends Activity {
                 SharedPreferences.Editor editor=sharedPreferences.edit();
                 editor.putString(BluetoothState.EXTRA_DEVICE_ADDRESS,data.getStringExtra(BluetoothState.EXTRA_DEVICE_ADDRESS));
                 editor.commit();
-                mBluetoothHelper.connect(data);
+                //mBluetoothHelper.connect(data);
             }
         } else if(requestCode == BluetoothState.REQUEST_ENABLE_BT) {
             if(resultCode == Activity.RESULT_OK) {
-                mBluetoothHelper.setupService();
-                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+                //mBluetoothHelper.setupService();
+                //mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
             } else {
                 Toast.makeText(getApplicationContext()
                         , "Bluetooth was not enabled."
@@ -231,7 +233,9 @@ public class MainActivity extends Activity {
                 String light_status = data.getStringExtra(ManualSwitchActivity.SELECTED_MODE);
                 if (!light_status.equals(DefinedKeyword.ERR_NOT_PRESET)) {
                     updateLightStatusAndBackground(light_status);
-                    mBluetoothHelper.send(DefinedKeyword.getBTCmdFromStatus(light_status), true);
+                    //mBluetoothHelper.send(DefinedKeyword.getBTCmdFromStatus(light_status), true);
+                    //notify_service.sendBTCmd(DefinedKeyword.getBTCmdFromStatus(light_status));
+                    BluetoothHelper.sendBTCmd(DefinedKeyword.getBTCmdFromStatus(light_status));
                 }
             }
         } else if (requestCode == PairActivity.SEND_REQUEST_CODE) {

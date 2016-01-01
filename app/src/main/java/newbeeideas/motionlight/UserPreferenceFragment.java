@@ -98,7 +98,7 @@ public class UserPreferenceFragment extends PreferenceFragment {
         } else if (sharedPreferences.getString(Constants.PAIRED_PHONE_NUMBER, Constants.DEFAULT_PAIRED_PHONE_NUMBER).equals(Constants.DEFAULT_PAIRED_PHONE_NUMBER)) {
             isPaired = false;
             pm.findPreference(getString(R.string.preference_pair_key)).setTitle(getString(R.string.pair_account_pair));
-        } else if (sharedPreferences.getString(Constants.PAIR_REQUEST_PHONE_NUM, Constants.DEFAULT_PAIR_REQUEST_PHONE_NUM).equals(Constants.DEFAULT_PAIR_REQUEST_PHONE_NUM)) {
+        } else if (!sharedPreferences.getString(Constants.PAIR_REQUEST_PHONE_NUM, Constants.DEFAULT_PAIR_REQUEST_PHONE_NUM).equals(Constants.DEFAULT_PAIR_REQUEST_PHONE_NUM)) {
             isAcceptRequest = true;
             pm.findPreference(getString(R.string.preference_pair_key)).setTitle(getString(R.string.pair_account_accept));
         }

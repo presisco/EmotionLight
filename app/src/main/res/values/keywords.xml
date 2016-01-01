@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="keyword_red_default">我很烦</string>
-    <string name="keyword_green_default">我很高兴</string>
-    <string name="keyword_blue_default">我很抑郁</string>
+    <string name="keyword_red_default">红色</string>
+    <string name="keyword_green_default">绿色</string>
+    <string name="keyword_blue_default">蓝色</string>
     <string name="keyword_close_default">关闭</string>
 
 </resources>

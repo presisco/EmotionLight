@@ -92,7 +92,7 @@ public class DefinedKeyword {
         KEYWORD_RED = sharedPreferences.getString(Constants.USER_DEFINED_KEYWORD_RED, context.getResources().getString(R.string.keyword_red_default));
         KEYWORD_GREEN = sharedPreferences.getString(Constants.USER_DEFINED_KEYWORD_GREEN, context.getResources().getString(R.string.keyword_green_default));
         KEYWORD_BLUE = sharedPreferences.getString(Constants.USER_DEFINED_KEYWORD_BLUE, context.getResources().getString(R.string.keyword_blue_default));
-        KEYWORD_CLOSE = sharedPreferences.getString(Constants.USER_DEFINED_KEYWORD_CLOSE, context.getResources().getString(R.string.keyword_blue_default));
+        KEYWORD_CLOSE = sharedPreferences.getString(Constants.USER_DEFINED_KEYWORD_CLOSE, context.getResources().getString(R.string.keyword_close_default));
     }
 
     public static String btCmd2Status(String cmd) {

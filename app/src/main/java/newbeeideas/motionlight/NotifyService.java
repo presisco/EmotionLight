@@ -16,10 +16,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -29,7 +33,7 @@ import app.akexorcist.bluetotohspp.library.BluetoothState;
  */
 public class NotifyService extends Service {
     public static final String TAG = NotifyService.class.getSimpleName();
-    private static final Boolean ENABLE_NETWORK = false;
+    private static final Boolean ENABLE_NETWORK = true;
 
     private static final String ERR_BT_DISABLED = "err_bt_disabled";
     private static final String ERR_BT_DISCONNECTED = "err_bt_disconnected";
@@ -38,6 +42,8 @@ public class NotifyService extends Service {
 
     private static final String BT_CONNECTED = "bt_connected";
 
+    private static final String HEAD_SOCKET_CLT2SRV = "head_socket_clt2srv";
+    private static final String HEAD_SOCKET_SRV2CLT = "head_socket_srv2clt";
     private static final String HEAD_LIGHT_CHANGE = "light_change";
     private static final String HEAD_PAIR_REQUEST = "pair_request";
     private static final String HEAD_PAIR_REQUEST_ACCEPTED = "pair_request_accepted";
@@ -48,49 +54,47 @@ public class NotifyService extends Service {
     private static final String EMPTY_STATUS = "empty_status";
 
     private final IBinder mBinder = new NotifyServiceBinder();
-    private BluetoothSPP mBluetoothHelper;
+    //private BluetoothSPP mBluetoothHelper;
     private SharedPreferences sharedPreferences;
-    private Socket socket;
+    private Socket outputSocket;
+    private Socket inputSocket;
 
     private String comming_pair_num;
+
+    private PrintWriter printWriter;
+    private BufferedReader bufferedReader;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-        mBluetoothHelper = new BluetoothSPP(this);
-        mBluetoothHelper.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
-            public void onDataReceived(byte[] data, String message) {
-                Log.d(TAG, "Received message:" + message);
-            }
-        });
-        mBluetoothHelper.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
-            public void onDeviceDisconnected() {
-                notifyUser(ERR_BT_DISCONNECTED);
-            }
-
-            public void onDeviceConnectionFailed() {
-                notifyUser(ERR_BT_FAILED);
-            }
-
-            public void onDeviceConnected(String name, String address) {
-                Log.d(TAG, "Bluetooth device connected");
-            }
-        });
-
         sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-
         initNetwork();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-
-        checkBluetoothStatus();
-
-        waitForNext();
-
+        //waitForNext();
+//        mBluetoothHelper = new BluetoothSPP(this);
+//        mBluetoothHelper.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
+//            public void onDataReceived(byte[] data, String message) {
+//                Log.d(TAG, "Received message:" + message);
+//            }
+//        });
+//        mBluetoothHelper.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
+//            public void onDeviceDisconnected() {
+//                notifyUser(ERR_BT_DISCONNECTED);
+//            }
+//
+//            public void onDeviceConnectionFailed() {
+//                notifyUser(ERR_BT_FAILED);
+//            }
+//
+//            public void onDeviceConnected(String name, String address) {
+//                Log.d(TAG, "Bluetooth device connected");
+//            }
+//        });
+//        checkBluetoothStatus();
         return Service.START_STICKY;
     }
 
@@ -114,6 +118,7 @@ public class NotifyService extends Service {
         Log.d(TAG, "notify()");
         NotificationManager notificationManager = (NotificationManager) getSystemService(this.NOTIFICATION_SERVICE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.mipmap.ic_launcher);
         Intent intent;
 
         switch (msg_type) {
@@ -142,8 +147,8 @@ public class NotifyService extends Service {
                 intent = new Intent(this, MainActivity.class);
                 break;
             case HEAD_LIGHT_CHANGE:
-                builder.setContentTitle(getResources().getString(R.string.notification_title_no_network))
-                        .setContentText(getResources().getString(R.string.notification_content_no_network));
+                builder.setContentTitle(getResources().getString(R.string.notification_title_new_user_msg))
+                        .setContentText(getResources().getString(R.string.notification_content_new_user_msg));
 
                 intent = new Intent(this, MainActivity.class);
                 break;
@@ -192,27 +197,34 @@ public class NotifyService extends Service {
         new ServerListener().execute();
     }
 
-    public Boolean checkBluetoothStatus() {
-        if (mBluetoothHelper.isBluetoothEnabled()) {
-            if (mBluetoothHelper.isServiceAvailable()) {
-                mBluetoothHelper.setupService();
-                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
-                if (sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " ").equals(" ")) {
-                    return false;
-                } else {
-                    mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " "));
-                    return true;
-                }
-            }
-        } else {
-            notifyUser(ERR_BT_DISABLED);
-            return false;
-        }
-        return false;
-    }
+//    public Boolean checkBluetoothStatus() {
+//        if (mBluetoothHelper.isBluetoothEnabled()) {
+//            if (mBluetoothHelper.isServiceAvailable()) {
+//                mBluetoothHelper.setupService();
+//                mBluetoothHelper.startService(BluetoothState.DEVICE_OTHER);
+//                if (sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " ").equals(" ")) {
+//                    return false;
+//                } else {
+//                    mBluetoothHelper.connect(sharedPreferences.getString(BluetoothState.EXTRA_DEVICE_ADDRESS, " "));
+//                    return true;
+//                }
+//            }
+//
+//        } else {
+//            notifyUser(ERR_BT_DISABLED);
+//            return false;
+//        }
+//        return false;
+//    }
 
     public void login() {
-        new PostMsg().execute(HEAD_LOGIN);
+
+        new PostMsg().execute(HEAD_LOGIN, sharedPreferences.getString(Constants.USER_PHONE_NUMBER, Constants.DEFAULT_USER_PHONE_NUMBER));
+    }
+
+    public void initListener() {
+        new ServerListener().execute(getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
+                .getString(Constants.USER_PHONE_NUMBER, Constants.DEFAULT_USER_PHONE_NUMBER));
     }
 
     public void pair(String pair_id) {
@@ -220,11 +232,15 @@ public class NotifyService extends Service {
     }
 
     public void signal(String cmd) {
-        new PostMsg().execute(HEAD_LIGHT_CHANGE, cmd);
+        new PostMsg().executeOnExecutor(Executors.newCachedThreadPool(), HEAD_LIGHT_CHANGE, cmd);
     }
 
     public void acceptedRequest() {
         new PostMsg().execute(HEAD_PAIR_REQUEST_ACCEPTED);
+    }
+
+    public void sendBTCmd(String cmd) {
+        //mBluetoothHelper.send(cmd,true);
     }
 
     public class NotifyServiceBinder extends Binder {
@@ -233,7 +249,7 @@ public class NotifyService extends Service {
         }
     }
 
-    private class ServerListener extends AsyncTask<Void, Void, String> {
+    private class ServerListener extends AsyncTask<String, Void, String> {
         @Override
         protected void onPostExecute(String mode) {
             super.onPostExecute(mode);
@@ -244,25 +260,40 @@ public class NotifyService extends Service {
         }
 
         @Override
-        protected String doInBackground(Void... params) {
+        protected String doInBackground(String... params) {
             String mode = EMPTY_STATUS;
             if (ENABLE_NETWORK) {
                 try {
-                    DataInputStream dis = new DataInputStream(socket.getInputStream());
-                    String msg = dis.readUTF();
-                    mode = msg;
-                    switch (msg) {
-                        case HEAD_LIGHT_CHANGE:
-                            msg = dis.readUTF();
-                            if (DefinedKeyword.isValidBTCmd(msg) && checkBluetoothStatus()) {
-                                mBluetoothHelper.send(msg, true);
-                            }
-                            break;
-                        case HEAD_PAIR_REQUEST:
-                            comming_pair_num = dis.readUTF();
-                            break;
-                        case HEAD_PAIR_REQUEST_ACCEPTED:
-                            break;
+                    if (params.length == 0) {
+                        String msg = bufferedReader.readLine();
+                        mode = msg;
+                        Log.d(TAG, "listener received head:" + msg);
+                        switch (msg) {
+                            case HEAD_LIGHT_CHANGE:
+                                msg = bufferedReader.readLine();
+                                Log.d(TAG, "listener received content:" + msg);
+                                if (DefinedKeyword.isValidBTCmd(msg)) {
+                                    //mBluetoothHelper.send(msg, true);
+                                    BluetoothHelper.sendBTCmd(msg);
+                                }
+                                break;
+                            case HEAD_PAIR_REQUEST:
+                                comming_pair_num = bufferedReader.readLine();
+                                break;
+                            case HEAD_PAIR_REQUEST_ACCEPTED:
+                                break;
+                        }
+                    } else {
+                        mode = HEAD_SOCKET_SRV2CLT;
+                        Log.d(TAG, "setting up listener...");
+                        String socket_host_addr = getResources().getString(R.string.socket_host_addr);
+                        int socket_host_port = Integer.parseInt(getResources().getString(R.string.socket_srv2clt_port));
+                        inputSocket = new Socket(socket_host_addr, socket_host_port);
+                        bufferedReader = new BufferedReader(new InputStreamReader(inputSocket.getInputStream()));
+                        PrintWriter pw = new PrintWriter(new OutputStreamWriter(inputSocket.getOutputStream()));
+                        pw.println(params[0]);
+                        pw.flush();
+                        Log.d(TAG, "listener established");
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -276,39 +307,33 @@ public class NotifyService extends Service {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            if (s == EMPTY_STATUS)
+            if (s == EMPTY_STATUS || s == HEAD_UNACCEPTABLE)
                 notifyUser(s);
+            if (s == HEAD_LOGIN)
+                initListener();
         }
 
         @Override
         protected String doInBackground(String... params) {
+            Log.d(TAG, "PostMsg.doInBackground():HEAD=" + params[0]);
             String result = EMPTY_STATUS;
             if (ENABLE_NETWORK) {
-                try {
-                    String mode = params[0];
-                    DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                    dos.writeUTF(mode);
-                    switch (mode) {
-                        case HEAD_LOGIN:
-                            dos.writeUTF(sharedPreferences.getString(Constants.USER_PHONE_NUMBER, " "));
-                            break;
-                        case HEAD_PAIR_REQUEST:
-                            dos.writeUTF(params[1]);
-                            break;
-                        case HEAD_LIGHT_CHANGE:
-                            dos.writeUTF(params[1]);
-                            break;
-                        case HEAD_PAIR_REQUEST_ACCEPTED:
-                            break;
-                        default:
-                            result = HEAD_UNACCEPTABLE;
-                            break;
-                    }
-                    dos.flush();
-                    dos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                String mode = params[0];
+                result = mode;
+                printWriter.println(params[0]);
+                switch (mode) {
+                    case HEAD_LOGIN:
+                    case HEAD_PAIR_REQUEST:
+                    case HEAD_LIGHT_CHANGE:
+                        printWriter.println(params[1]);
+                        break;
+                    case HEAD_PAIR_REQUEST_ACCEPTED:
+                        break;
+                    default:
+                        result = HEAD_UNACCEPTABLE;
+                        break;
                 }
+                printWriter.flush();
             }
             return result;
         }
@@ -317,11 +342,14 @@ public class NotifyService extends Service {
     private class InitNetwork extends AsyncTask<Void, Void, Integer> {
         @Override
         protected Integer doInBackground(Void... params) {
+            Log.d(TAG, "Setting up connection...");
             String socket_host_addr = getResources().getString(R.string.socket_host_addr);
-            int socket_host_port = Integer.parseInt(getResources().getString(R.string.socket_host_port));
+            int socket_host_port = Integer.parseInt(getResources().getString(R.string.socket_clt2srv_port));
             try {
-                socket = new Socket(socket_host_addr, socket_host_port);
+                outputSocket = new Socket(socket_host_addr, socket_host_port);
+                printWriter = new PrintWriter(new OutputStreamWriter(outputSocket.getOutputStream()));
                 login();
+                Log.d(TAG, "Connection established");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -333,5 +361,4 @@ public class NotifyService extends Service {
             super.onPostExecute(integer);
         }
     }
-
 }

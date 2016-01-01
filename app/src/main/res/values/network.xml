@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="socket_host_addr">local_host</string>
-    <string name="socket_host_port">22222</string>
+    <string name="socket_host_addr">DESKTOP-AQQCA10</string>
+    <string name="socket_clt2srv_port">6666</string>
+    <string name="socket_srv2clt_port">6667</string>
     <string name="head_light_change">light_change</string>
     <string name="head_pair_request">pair_request</string>
 </resources>

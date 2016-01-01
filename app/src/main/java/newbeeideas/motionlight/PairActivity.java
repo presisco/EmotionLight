@@ -39,14 +39,17 @@ public class PairActivity extends Activity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             NotifyService.NotifyServiceBinder binder = (NotifyService.NotifyServiceBinder) service;
             NotifyService notifyService = binder.getNotifyService();
+            SharedPreferences sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
             switch (mode) {
                 case MODE_SEND_REQUEST:
                     notifyService.pair(mInputText.getText().toString().trim());
+                    editor.putString(Constants.PAIRED_PHONE_NUMBER, mInputText.getText().toString().trim());
+                    editor.commit();
+                    PairActivity.this.finish();
                     break;
                 case MODE_ACCEPT_REQUEST:
                     notifyService.acceptedRequest();
-                    SharedPreferences sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(Constants.PAIRED_PHONE_NUMBER, displayContent);
                     editor.commit();
                     PairActivity.this.finish();
